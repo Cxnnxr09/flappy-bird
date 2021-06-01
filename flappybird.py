@@ -9,7 +9,7 @@ class Player:
     Creates an object which will be controlled by player inputs to flap
     upwards.
 
-    Attributes
+    Instance Variables
     ----------
     _canvas : tk
         canvas on which to draw objects on
@@ -17,6 +17,8 @@ class Player:
         player tk rectangle object
     _control_key : str
         key that controls the player
+    _control_button : int
+        number to represent which button click controls player
     _y_velocity : int
         players y axis speed
     _movement_stack : list
@@ -49,18 +51,20 @@ class Player:
 
     get_coordinates(self):
         Return player position.
+
+        :return: player_position.
     """
 
-    BIRD_WIDTH = 40  # integer constant for the birds x size in pixels
-    BIRD_HEIGHT = 40  # integer constant for the birds y size in pixels
+    _BIRD_WIDTH = 40  # integer constant for the birds x size in pixels
+    _BIRD_HEIGHT = 40  # integer constant for the birds y size in pixels
 
     TOP_Y = 1  # index for bird_position top y
     RIGHT_X = 2  # index for bird_position right x
     BOTTOM_Y = 3  # index for bird_position bottom y
 
-    ACCELERATION = 5  # integer constant for acceleration
-    JUMP_TIME = 1.6  # integer constant for jump exponent
-    FALL_TIME = 0.1  # integer constant for fall exponent
+    _ACCELERATION = 5  # integer constant for acceleration
+    _JUMP_TIME = 1.6  # integer constant for jump exponent
+    _FALL_TIME = 0.1  # integer constant for fall exponent
 
     def __init__(self, canvas, x, y, control_key, control_button):
         """Establish the attributes that are used by the class.
@@ -73,8 +77,8 @@ class Player:
         """
         self._canvas = canvas
         self.player_rectangle = canvas.create_rectangle(x, y,
-                                                        x + self.BIRD_HEIGHT,
-                                                        y + self.BIRD_WIDTH,
+                                                        x + self._BIRD_HEIGHT,
+                                                        y + self._BIRD_WIDTH,
                                                         fill="yellow")
         self._control_key = control_key  # controls are defined when
         # making an object
@@ -91,8 +95,10 @@ class Player:
         """
         if len(self._movement_stack) == 0:  # checks if user input jump
             self._fall()  # if no input is in list the object falls.
-        if "True" in self._movement_stack:  # checks if user input jump
-            self._flap()  # ff input is in the list the object jumps
+        if len(self._movement_stack) == 1:  # checks if user input jump
+            self._flap()  # if input is in the list the object jumps
+        if len(self._movement_stack) > 1:  # checks if stack is too large
+            self._movement_stack.pop()  # pops one of the stack items
 
     def _fall(self):
         """Move the bird downwards in an increasing amount.
@@ -101,7 +107,8 @@ class Player:
         birds increasing velocity by adding the acceleration constant
         multiplied by the constant fall time and moves it by that amount.
         """
-        self._y_velocity += self.ACCELERATION * self.FALL_TIME  # sets velocity
+        self._y_velocity += self._ACCELERATION * self._FALL_TIME  # sets
+        # velocity
         self._canvas.move(self.player_rectangle, 0,
                           self._y_velocity)  # moves bird
 
@@ -113,7 +120,8 @@ class Player:
         Removes the variable from the movement_stack in order to make the bird
         fall again.
         """
-        self._y_velocity = -self.ACCELERATION * self.JUMP_TIME  # sets velocity
+        self._y_velocity = -self._ACCELERATION * self._JUMP_TIME  # sets
+        # velocity
         self._canvas.move(self.player_rectangle, 0,
                           self._y_velocity)  # moves object
         self._movement_stack.remove("True")  # removes true so bird falls
@@ -148,7 +156,8 @@ class Obstacle:
     """Create an obstacle object.
 
     Creates two objects, one for each pipe that move towards the left side
-    of the screen.
+    of the screen. Manages the variables halfway() and off_screen() which
+    influence how the pipes are managed in the game.
 
     Attributes
     ----------
@@ -178,24 +187,26 @@ class Obstacle:
         :param y: specifies the obstacles starting y position in the game.
 
     move_obstacles(self):
-        Move obstacles to the left, update positions and check locations.
+        Move obstacles to the left, update positions and check position of
+        the objects.
 
     _check_obstacle_positions(self):
         Check positions of the objects and change halfway and off_screen
         variables.
+
+        :return: If the location is off screen or halfway return True,
+        otherwise return False.
     """
 
-    OBSTACLE_WIDTH = 70  # integer constant for width of pipes
-    OBSTACLE_GAP = 150  # integer constant for gap between top and bottom pipe
-    MOVEMENT_SPEED = -2  # integer constant movement speed for the x axis
+    _OBSTACLE_WIDTH = 70  # integer constant for width of pipes
+    _OBSTACLE_GAP = 150  # integer constant for gap between top and bottom pipe
+    _MOVEMENT_SPEED = -2  # integer constant movement speed for the x axis
 
-    LEFT_X = 0  # index for obstacle position on the left x axis
-    TOP_Y = 1  # index for obstacle position on the top y axis
+    _LEFT_X = 0  # index for obstacle position on the left x axis
     RIGHT_X = 2  # index for obstacles position on the right x axis
-    BOTTOM_Y = 3  # index for obstacle position on the bottom y axis
 
-    SCREEN_WIDTH = 360  # integer constant for screen width
-    SCREEN_HEIGHT = 640  # integer constant for screen height
+    _SCREEN_WIDTH = 360  # integer constant for screen width
+    _SCREEN_HEIGHT = 640  # integer constant for screen height
 
     def __init__(self, canvas, x, y):
         """Establish the attributes that are used by the class.
@@ -205,16 +216,17 @@ class Obstacle:
         :param y: specifies the obstacles starting y position in the game.
         """
         self._canvas = canvas
-        self._top_rectangle = canvas.create_rectangle(x, y - self.OBSTACLE_GAP,
+        self._top_rectangle = canvas.create_rectangle(x,
+                                                      y - self._OBSTACLE_GAP,
                                                       x +
-                                                      self.OBSTACLE_WIDTH,
-                                                      y - self.SCREEN_HEIGHT,
+                                                      self._OBSTACLE_WIDTH,
+                                                      y - self._SCREEN_HEIGHT,
                                                       fill="green3")
         self._bottom_rectangle = canvas.create_rectangle(x, y,
                                                          x +
-                                                         self.OBSTACLE_WIDTH,
+                                                         self._OBSTACLE_WIDTH,
                                                          y +
-                                                         self.SCREEN_HEIGHT,
+                                                         self._SCREEN_HEIGHT,
                                                          fill="green3")
         self.top_obstacle_position = canvas.coords(self._top_rectangle)
         # coordinates for the top pipe
@@ -230,9 +242,9 @@ class Obstacle:
         the left. Updates positions of each object and then checks the
         locations.
         """
-        self._canvas.move(self._top_rectangle, self.MOVEMENT_SPEED,
+        self._canvas.move(self._top_rectangle, self._MOVEMENT_SPEED,
                           0)  # moves the top object by the movement speed
-        self._canvas.move(self._bottom_rectangle, self.MOVEMENT_SPEED,
+        self._canvas.move(self._bottom_rectangle, self._MOVEMENT_SPEED,
                           0)  # moves the bottom object by the movement speed
         self.top_obstacle_position = self._canvas.coords(
             self._top_rectangle)  # updates position of the top obstacle
@@ -241,23 +253,22 @@ class Obstacle:
         self._check_obstacle_positions()
 
     def _check_obstacle_positions(self):
-        """Check positions of the objects and change halfway and off_screen
-        variables.
+        """Check positions of the objects.
 
         Checks locations of the bottom object (which doesnt matter as both
         move at the same speed and will always be in the same x position.
         Changes appropriate variables if the object is in a determined
-        location.
+        location. This includes whether the object is halfway or off screen.
 
-        :return: If the location is off screen or halfway returns True,
-        otherwise returns False.
+        :return: If the location is off screen or halfway return True,
+        otherwise return False.
         """
         if self.bottom_obstacle_position[Obstacle.RIGHT_X] <= 0:  # checks
             # if the coordinates of the right side of one of the objects is
             # less than zero/off screen
             self.off_screen = True
-        if self.bottom_obstacle_position[Obstacle.LEFT_X] == \
-                self.SCREEN_WIDTH / 2:  # checks if the coordinates of the
+        if self.bottom_obstacle_position[Obstacle._LEFT_X] == \
+                self._SCREEN_WIDTH / 2:  # checks if the coordinates of the
             # left side of one of the objects is equal to half the screen
             # width/halfway
             self.halfway = True
@@ -296,9 +307,9 @@ class Scoreboard:
         Increase the score.
     """
 
-    FONT_SIZE = 25  # integer constant for font size
+    _FONT_SIZE = 25  # integer constant for font size
 
-    POINT_WORTH = 1  # integer to increase the score by
+    _POINT_WORTH = 1  # integer to increase the score by
 
     def __init__(self, canvas, x, y):
         """Establish the attributes that are used by the class.
@@ -312,7 +323,8 @@ class Scoreboard:
         self._y = y
         self.score = 0  # score is initially set to zero
         self._text = Label(self._canvas, fg="black", text=self.score,
-                           font=("Arial", self.FONT_SIZE))  # makes text widget
+                           font=("Arial", self._FONT_SIZE))  # makes text
+        # widget
         self._text.place(x=self._x, y=self._y)  # places text widget
 
     def increase_score(self):
@@ -321,7 +333,7 @@ class Scoreboard:
         Increases score by the point worth and configures score label show the
         change.
         """
-        self.score += self.POINT_WORTH  # score is increased by the point
+        self.score += self._POINT_WORTH  # score is increased by the point
         # worth
         self._text.config(text=self.score)  # configures the text widget to
         # show the score
@@ -376,16 +388,16 @@ class Game:
         Manage and increase score.
     """
 
-    DISTANCE_BETWEEN_OBSTACLES = 80  # integer constant for distance between
+    _DISTANCE_BETWEEN_OBSTACLES = 80  # integer constant for distance between
     # obstacles
-    MIN_RANGE_OF_PIPES = 200  # integer constant for minimum pipe y generation
-    MAX_RANGE_OF_PIPES = 600  # integer constant for maximum pipe y generation
+    _MIN_RANGE_OF_PIPES = 200  # integer constant for minimum pipe y generation
+    _MAX_RANGE_OF_PIPES = 600  # integer constant for maximum pipe y generation
 
-    REFRESH_SPEED = 14  # integer constant for amount of milliseconds to
+    _REFRESH_SPEED = 15  # integer constant for amount of milliseconds to
     # refresh window
 
-    SCREEN_WIDTH = 360  # integer constant for screen height
-    SCREEN_HEIGHT = 640  # integer constant for screen width
+    _SCREEN_WIDTH = 360  # integer constant for screen height
+    _SCREEN_HEIGHT = 640  # integer constant for screen width
 
     def __init__(self, application):
         """Establish the attributes that are used by the class.
@@ -394,7 +406,7 @@ class Game:
         """
         self._application = application  # instance of application class
         self._canvas = application.game_canvas
-        self._player = Player(self._canvas, 40, 200, 'space', 1)
+        self._player = Player(self._canvas, 40, 300, 'space', 1)
         self._obstacles = []  # list to contain active obstacles
         self._scoreboard = Scoreboard(self._canvas, 0, 0)
         self.score = 0  # variable to store the score
@@ -430,35 +442,35 @@ class Game:
         self._manage_score()  # runs the _manage_score() method
         self._application.check_restart()  # runs the applications
         # check_restart() method
-        self._window.after(self.REFRESH_SPEED, self.run_game)  # runs the
+        self._window.after(self._REFRESH_SPEED, self.run_game)  # runs the
         # run_game() method every REFRESH_SPEED milliseconds
 
     def _manage_pipes(self):
         """Move and manage pipes.
 
-         Runs the move_obstacle method for all obstacles in the obstacles
-         list. Creates a new pipe object when the one in front reaches
-         halfway. Removes pipes when the pipe leave the game boundaries.
-         """
+        Runs the move_obstacle method for all obstacles in the obstacles
+        list. Creates a new pipe object when the one in front reaches
+        halfway. Removes pipes when the pipe leave the game boundaries.
+        """
         for obstacle in self._obstacles:  # runs the move_obstacle command
             # for all obstacles in the _obstacles list
             obstacle.move_obstacle()
         if len(self._obstacles) == 0:  # if the length of the obstacles list
             # is 0, a obstacle is generated
-            obstacle = Obstacle(self._canvas, self.SCREEN_WIDTH,
-                                random.randrange(self.MIN_RANGE_OF_PIPES,
-                                                 self.MAX_RANGE_OF_PIPES))
+            obstacle = Obstacle(self._canvas, self._SCREEN_WIDTH,
+                                random.randrange(self._MIN_RANGE_OF_PIPES,
+                                                 self._MAX_RANGE_OF_PIPES))
             self._obstacles.append(obstacle)
         for obstacle in self._obstacles:  # checks the halfway and
             # off_screen boolean variables for every obstacle in the
             # _obstacles list and either generates a new one of deletes the
             # obstacle depending on what returns true
             if obstacle.halfway:  # checks if halfway
-                new_obstacle = Obstacle(self._canvas, self.SCREEN_WIDTH +
-                                        self.DISTANCE_BETWEEN_OBSTACLES,
+                new_obstacle = Obstacle(self._canvas, self._SCREEN_WIDTH +
+                                        self._DISTANCE_BETWEEN_OBSTACLES,
                                         random.randrange(
-                                            self.MIN_RANGE_OF_PIPES,
-                                            self.MAX_RANGE_OF_PIPES))  #
+                                            self._MIN_RANGE_OF_PIPES,
+                                            self._MAX_RANGE_OF_PIPES))  #
                 # generates new obstacle object
                 self._obstacles.append(new_obstacle)  # adds obstacle to
                 # list of obstacles
@@ -491,7 +503,7 @@ class Game:
                 # the top and the bottom pipe
                 return True
             elif self._player.get_coordinates()[Player.BOTTOM_Y] >= \
-                    self.SCREEN_HEIGHT or \
+                    self._SCREEN_HEIGHT or \
                     self._player.get_coordinates()[Player.TOP_Y] <= 0:
                 # checks if the players coordinates are greater than the
                 # screen height or less than zero to check for boundary
@@ -560,66 +572,67 @@ class Application:
         Unpack and replaces game frame and class and pack menu.
     """
 
-    BUTTON_HEIGHT = 1
-    BUTTON_WIDTH = 8
+    _BUTTON_HEIGHT = 2
+    _BUTTON_WIDTH = 12
 
-    SCREEN_HEIGHT = 640
-    SCREEN_WIDTH = 360
+    _SCREEN_HEIGHT = 640
+    _SCREEN_WIDTH = 360
 
-    TITLE_FONT_SIZE = 35
-    GENERAL_FONT_SIZE = 15
+    _TITLE_FONT_SIZE = 30
+    _GENERAL_FONT_SIZE = 15
+
+    _INSTRUCTIONS_TEXT = """Navigate between the pipes.
+    Try to beat your score.
+    Use the space-bar or mouse-1 button.
+    (left mouse click)
+    to flap upwards.
+    Use F10 to pause. \n """
 
     def __init__(self):
         """Establish attributes that are used by the class."""
         self.window = Tk()  # creating the window
         self.window.resizable(False, False)  # makes the window not resizeable
+        self.window.title("Flappy Bird")  # titles the window
+        self.window.unbind_all('<<NextWindow>>')
         # menu frame
-        self._menu_frame = Frame(self.window, width=self.SCREEN_WIDTH,
-                                 height=self.SCREEN_HEIGHT)
+        self._menu_frame = Frame(self.window, width=self._SCREEN_WIDTH,
+                                 height=self._SCREEN_HEIGHT)
+        self._menu_frame.pack_propagate(0)  # keeps window at a fixed size
         self._menu_frame.pack()
         # title label widget
         self._title = Label(self._menu_frame, text="Flappy Bird",
-                            font=("arial", self.TITLE_FONT_SIZE, "bold"),
+                            font=("arial", self._TITLE_FONT_SIZE, "bold"),
                             justify="center")
         self._title.pack()
         # instructions label widget
-        self._instructions = Label(self._menu_frame, text="Navigate between "
-                                                          "the pipes and try "
-                                                          "to beat your "
-                                                          "score.\n "
-                                                          "Use the space-bar "
-                                                          "or "
-                                                          "mouse-1 button ("
-                                                          "left mouse click) "
-                                                          "to flap upwards.\n "
-                                                          "Use F10 to"
-                                                          "pause.\n",
-                                   font=("Arial", self.GENERAL_FONT_SIZE))
+        self._instructions = Label(self._menu_frame,
+                                   text=self._INSTRUCTIONS_TEXT,
+                                   font=("Arial", self._GENERAL_FONT_SIZE))
         self._instructions.pack()
         # play button widget
         self._play_button = Button(self._menu_frame, text="Play",
                                    font=(
-                                       "Arial", self.GENERAL_FONT_SIZE),
+                                       "Arial", self._GENERAL_FONT_SIZE),
                                    command=lambda: self._play_game(),
-                                   width=self.BUTTON_WIDTH,
-                                   height=self.BUTTON_HEIGHT)
+                                   width=self._BUTTON_WIDTH,
+                                   height=self._BUTTON_HEIGHT)
         self._play_button.pack()
         # exit button widget
         self._exit_button = Button(self._menu_frame, text="Exit!",
                                    font=(
-                                       "Arial", self.GENERAL_FONT_SIZE),
+                                       "Arial", self._GENERAL_FONT_SIZE),
                                    command=lambda: exit(),
-                                   width=self.BUTTON_WIDTH,
-                                   height=self.BUTTON_HEIGHT)
+                                   width=self._BUTTON_WIDTH,
+                                   height=self._BUTTON_HEIGHT)
         self._exit_button.pack()
         # score label widget
         self._score = Label(self._menu_frame, text="",
-                            font=("arial", self.GENERAL_FONT_SIZE),
+                            font=("arial", self._GENERAL_FONT_SIZE),
                             justify="center")
         self._score.pack()
         # game canvas and object
-        self.game_canvas = Canvas(self.window, width=self.SCREEN_WIDTH,
-                                  height=self.SCREEN_HEIGHT,
+        self.game_canvas = Canvas(self.window, width=self._SCREEN_WIDTH,
+                                  height=self._SCREEN_HEIGHT,
                                   background="skyblue")
         self.game_object = Game(self)
 
@@ -632,8 +645,8 @@ class Application:
         """
         self._menu_frame.pack_forget()  # unpacks the menu frame
         self.game_canvas.pack()  # packs the game canvas
-        self.game_canvas.focus_set()  # sets focus to the game_canvas
         self.game_object.run_game()  # runs the main game function
+        self.game_canvas.focus_set()  # sets focus to the game_canvas
 
     def check_restart(self):
         """Unpack and replaces game frame and class and pack menu.
@@ -652,8 +665,8 @@ class Application:
             self._menu_frame.pack()  # packs the menu frame
             self._score.config(text="Score: " + str(self.game_object.score))
             # configures the score label widget to the game_object score
-            self.game_canvas = Canvas(self.window, width=self.SCREEN_WIDTH,
-                                      height=self.SCREEN_HEIGHT,
+            self.game_canvas = Canvas(self.window, width=self._SCREEN_WIDTH,
+                                      height=self._SCREEN_HEIGHT,
                                       background="skyblue")  # creates a new
             # canvas
             self.game_object = Game(self)  # creates a new game
